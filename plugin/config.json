@@ -1,0 +1,12 @@
+{
+  "description": "Oracle Cloud Vault Secrets plugin for Docker",
+  "documentation": "https://github.com/dpcsoftware/oci-secrets-docker",
+  "entrypoint": ["/bin/oci-secrets"],
+  "network": {
+    "type": "host"
+  },
+  "interface": {
+    "types": ["docker.secretprovider/1.0"],
+    "socket": "plugin.sock"
+  }
+}
