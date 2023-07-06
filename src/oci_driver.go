@@ -32,31 +32,53 @@ func (d *OCIDriver) Init() error {
 }
 
 func (d OCIDriver) Get(req docker_secrets.Request) docker_secrets.Response {
-	ocid := req.SecretLabels["ocid"]
-
-	if (ocid == "") {
-		fmt.Println("No ocid label found")
-		return docker_secrets.Response{nil, "No ocid label found", true}
-	}
+	var secretBundle oci_secrets.SecretBundle
 
 	ctx := context.Background()
 
-	bundleRequest := oci_secrets.GetSecretBundleRequest{}
-	bundleRequest.SecretId = &ocid
-	bundleResponse, err := d.client.GetSecretBundle(ctx, bundleRequest)
-	
-	if (err != nil) {
-		fmt.Println("Failed to get OCI secret value: ", err.Error())
-		return docker_secrets.Response{nil, err.Error(), true}
+	ocid := req.SecretLabels["ocid"]
+	if (ocid != "") {
+		bundleRequest := oci_secrets.GetSecretBundleRequest{SecretId: &ocid}
+		bundleResponse, err := d.client.GetSecretBundle(ctx, bundleRequest)
+		if (err != nil) {
+			fmt.Println("Failed to get OCI secret value: ", err.Error())
+			return docker_secrets.Response{nil, err.Error(), true}
+		}
+		secretBundle = bundleResponse.SecretBundle
+	} else {
+		vaultOcid := req.SecretLabels["vault_ocid"]
+		if (vaultOcid != "") {
+			secretName := req.SecretLabels["name"]
+			if (secretName == "") {
+				secretName = req.SecretName
+			}
+
+			bundleRequest := oci_secrets.GetSecretBundleByNameRequest{
+				SecretName: &secretName,
+				VaultId: &vaultOcid,
+			}
+			bundleResponse, err := d.client.GetSecretBundleByName(ctx, bundleRequest)
+			if (err != nil) {
+				fmt.Println("Failed to get OCI secret value: ", err.Error())
+				return docker_secrets.Response{nil, err.Error(), true}
+			}
+			secretBundle = bundleResponse.SecretBundle
+		} else {
+			fmt.Println("No ocid or vault_ocid label found")
+			return docker_secrets.Response{nil, "No ocid or vault_ocid label found", true}
+		}
 	}
 
-	secretContent := bundleResponse.SecretBundle.SecretBundleContent.(oci_secrets.Base64SecretBundleContentDetails)
+	secretContent := secretBundle.SecretBundleContent.(oci_secrets.Base64SecretBundleContentDetails)
 
 	value, err := base64.StdEncoding.DecodeString(*secretContent.Content)
+	if (err != nil) {
+		fmt.Println("Failed to decode secret value")
+		return docker_secrets.Response{nil, "Failed to decode secret value", true}
+	}
 
-	resp := docker_secrets.Response{}
-	resp.DoNotReuse = true
-	resp.Value = value
-
-	return resp
+	return docker_secrets.Response{
+		Value: value,
+		DoNotReuse: true,
+	}
 }
