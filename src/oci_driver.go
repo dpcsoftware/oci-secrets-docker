@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"encoding/base64"
+	"strings"
 
 	docker_secrets "github.com/docker/go-plugins-helpers/secrets"
 	oci_auth "github.com/oracle/oci-go-sdk/v65/common/auth"
@@ -51,6 +52,13 @@ func (d OCIDriver) Get(req docker_secrets.Request) docker_secrets.Response {
 			secretName := req.SecretLabels["name"]
 			if (secretName == "") {
 				secretName = req.SecretName
+
+				// When using the secret name, strip the stack namespace
+				namespace := req.SecretLabels["com.docker.stack.namespace"]
+				if (namespace != "") {
+					secretName = strings.TrimPrefix(secretName, namespace)
+					secretName = strings.TrimLeft(secretName, "_-")
+				}
 			}
 
 			bundleRequest := oci_secrets.GetSecretBundleByNameRequest{
