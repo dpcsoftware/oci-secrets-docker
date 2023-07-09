@@ -10,7 +10,7 @@ Install it from Docker Hub picking the approriate version and platform.
 For example, to install version 0.1 in a node with amd64 architecture, use:
 
 ```sh
-docker install --alias oci-secrets dpcsoftware/oci-secrets:0.1-amd64
+docker plugin install --alias oci-secrets dpcsoftware/oci-secrets:0.1-amd64
 ```
 
 Check all tags available in Docker Hub: https://hub.docker.com/r/dpcsoftware/oci-secrets/tags
