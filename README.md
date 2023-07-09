@@ -13,6 +13,8 @@ For example, to install version 0.1 in a node with amd64 architecture, use:
 docker install --alias oci-secrets dpcsoftware/oci-secrets:0.1-amd64
 ```
 
+Check all tags available in Docker Hub: https://hub.docker.com/r/dpcsoftware/oci-secrets/tags
+
 ## Configuration
 
 This first version only supports instance principal authentication.
@@ -49,7 +51,8 @@ secrets:
 In this case, it will look for a secret with name `my_secret` in the specified vault. Docker stack namespace will
 be stripped from secret name in the lookup process.
 
-If, for any reason, you would like to get a secret and keep the Docker secret name from the Oracle secret name, you can use the `name` label.
+If, for any reason, you would like to create a secret with a name that must be different from the Oracle secret name, you can use the `name` label. In this case, the value of the label will be used
+in the lookup process.
 
 ```yaml
 secrets:
